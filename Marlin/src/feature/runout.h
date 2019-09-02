@@ -290,6 +290,7 @@ class FilamentSensorBase {
 /********************************* RESPONSE TYPE *********************************/
 
 #ifdef FILAMENT_RUNOUT_DISTANCE_MM
+  #ifndef FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
 
   // RunoutResponseDelayed triggers a runout event only if the length
   // of filament specified by FILAMENT_RUNOUT_DISTANCE_MM has been fed
@@ -341,7 +342,40 @@ class FilamentSensorBase {
         }
       }
   };
+  #else //FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
+  // RunoutResponsePrintCounter triggers a runout event only if the length
+  // of filament specified by FILAMENT_RUNOUT_DISTANCE_MM has been fed
+  // during a runout condition.
+  // Single extruder only, requries PRINTCOUNTER
+    class RunoutResponsePrintCounter{
+      private:
+        static volatile float spent_filament;
+        static inline float get_filament_used() { return print_job_timer.getStats().filamentUsed; }
+        static inline float get_remaining() { return runout_distance_mm - (get_filament_used()-spent_filament); }
 
+      public:
+        static float runout_distance_mm;
+
+        static inline void run() {
+          #ifdef FILAMENT_RUNOUT_SENSOR_DEBUG
+          static millis_t t = 0;
+          const millis_t ms = millis();
+          if (ELAPSED(ms, t)) {
+            t = millis() + 1000UL;
+            serialprintPGM(PSTR("Remaining mm: "));
+            SERIAL_ECHO(get_remaining());
+            SERIAL_EOL();
+          }
+          #endif
+        }
+
+        static inline void reset() { filament_present(0); }
+        static inline bool has_run_out() { return (get_filament_used()-spent_filament) > runout_distance_mm; }
+        static inline void block_completed(const block_t* const b)  { UNUSED(b); }
+        static inline void filament_present(const uint8_t extruder) { UNUSED(extruder); spent_filament = get_filament_used(); }
+  };
+
+  #endif //FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
 #else // !FILAMENT_RUNOUT_DISTANCE_MM
 
   // RunoutResponseDebounced triggers a runout event after a runout
@@ -361,11 +395,16 @@ class FilamentSensorBase {
 
 #endif // !FILAMENT_RUNOUT_DISTANCE_MM
 
+
 /********************************* TEMPLATE SPECIALIZATION *********************************/
 
 typedef TFilamentMonitor<
   #ifdef FILAMENT_RUNOUT_DISTANCE_MM
-    RunoutResponseDelayed,
+    #ifdef FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
+      RunoutResponsePrintCounter,
+    #else
+      RunoutResponseDelayed,
+    #endif
     #if ENABLED(FILAMENT_MOTION_SENSOR)
       FilamentSensorEncoder
     #else
