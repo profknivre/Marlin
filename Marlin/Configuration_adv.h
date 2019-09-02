@@ -1466,6 +1466,8 @@
 #define MINIMUM_STEPPER_POST_DIR_DELAY 650
 #define MINIMUM_STEPPER_PRE_DIR_DELAY 650
 
+#define MINIMUM_STEPPER_DIR_DELAY 200
+
 /**
  * Minimum stepper driver pulse width (in µs)
  *   0 : Smallest possible width the MCU can produce, compatible with TMC2xxx drivers
@@ -1477,7 +1479,7 @@
  *
  * Override the default value based on the driver type set in Configuration.h.
  */
-#define MINIMUM_STEPPER_PULSE 3
+#define MINIMUM_STEPPER_PULSE 10
 
 /**
  * Maximum stepping rate (in Hz) the stepper driver allows
@@ -1491,7 +1493,7 @@
  *
  * Override the default value based on the driver type set in Configuration.h.
  */
-#define MAXIMUM_STEPPER_RATE 400000
+#define MAXIMUM_STEPPER_RATE 200000
 
 // @section temperature
 
