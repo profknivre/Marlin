@@ -52,8 +52,13 @@ void FilamentSensorBase::filament_present(const uint8_t extruder) {
 #endif
 
 #ifdef FILAMENT_RUNOUT_DISTANCE_MM
-  float RunoutResponseDelayed::runout_distance_mm = FILAMENT_RUNOUT_DISTANCE_MM;
-  volatile float RunoutResponseDelayed::runout_mm_countdown[EXTRUDERS];
+  #ifdef FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
+      volatile float RunoutResponsePrintCounter::spent_filament = print_job_timer.getStats().filamentUsed;
+      float RunoutResponsePrintCounter::runout_distance_mm = FILAMENT_RUNOUT_DISTANCE_MM;
+    #else
+      float RunoutResponseDelayed::runout_distance_mm = FILAMENT_RUNOUT_DISTANCE_MM;
+      volatile float RunoutResponseDelayed::runout_mm_countdown[EXTRUDERS];
+    #endif //FILAMENT_RUNOUT_DISTANCE_PRINTCOUNTER
 #else
   int8_t RunoutResponseDebounced::runout_count; // = 0
 #endif
